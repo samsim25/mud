@@ -34,11 +34,7 @@ Avalon Lua Extensions:
 
 - [Lua Extensions](LuaExtensions.md)
 
-MoonSharp Project Links:
-
-- [Avalon MoonSharp Source Code (Avalon.MoonSharp)](https://github.com/blakepell/AvalonMudClient/tree/master/src/Avalon.MoonSharp)
-- [MoonSharp Source Code](https://github.com/moonsharp-devs/moonsharp)
-- [MoonSharp Community](https://www.moonsharp.org/)
+Note: MoonSharp-based scripting has been removed from this workspace. The project previously used MoonSharp for Lua support; scripting is now provided via a no-op engine unless compiled with `ENABLE_MOONSHARP`.
 
 ## Screenshots
 
