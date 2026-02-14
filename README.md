@@ -56,7 +56,7 @@ A Windows MUD (multi-user dimension) client that allows you to connect to and pl
 
  - [AvalonEdit](https://github.com/icsharpcode/AvalonEdit) (MIT)
  - [ModernWpfUI](https://github.com/Kinnara/ModernWpf) (MIT)
- - [MoonSharp](https://github.com/moonsharp-devs/moonsharp) (Custom License, see project)
+ - Lua scripting: optional (MoonSharp support removed/disabled in this fork)
  - [Command Line Parser](https://github.com/commandlineparser/commandline) (MIT)
  - [Argus Framework](https://www.github.com/blakepell/ArgusFramework) (MIT)
  - [WPF-AutoComplete-TextBox](https://github.com/quicoli/WPF-AutoComplete-TextBox) (MIT)

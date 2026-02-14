@@ -30,9 +30,10 @@ namespace Avalon.HashCommands
                 .WithParsed(o =>
                 {
                     var sb = Argus.Memory.StringBuilderPool.Take();
-                    var moonSharp = ((Interpreter)this.Interpreter).ScriptHost.Engine;
-                    //var nLua = ((Interpreter)this.Interpreter).ScriptHost.NLua;
-                    var scriptHost = ((Interpreter) this.Interpreter).ScriptHost;
+                    var scriptHost = ((Interpreter)this.Interpreter).ScriptHost;
+#if ENABLE_MOONSHARP
+                    var moonSharp = ((Interpreter)this.Interpreter).ScriptHost.Engine as dynamic; // MoonSharp-specific details
+#endif
 
                     sb.AppendLine();
                     sb.Append("{GA{gvalon {WLua Environment Info:{x\r\n");
@@ -40,7 +41,8 @@ namespace Avalon.HashCommands
                     sb.AppendFormat(" {{G * {{WScripts Active:{{x                      {{C{0}{{x\r\n", scriptHost.Statistics.ScriptsActive.ToString());
                     sb.AppendLine();
 
-                    sb.Append("{CM{coon{CS{charp{x {WLua Environment Info:{x\r\n");
+#if ENABLE_MOONSHARP
+                    sb.Append("{CM{coon{CS{charp{x {WLua Environment Info:{x}\r\n");
                     sb.Append("---------------------------------------------------------------------\r\n");
                     sb.AppendFormat(" {{G * {{WMemory Pool:{{x                         {{C{0}/{1}{{x\r\n", moonSharp.MemoryPool.Count().ToString(), moonSharp.MemoryPool.Max.ToString());
                     sb.AppendFormat(" {{G * {{WMemory Pool New Objects:{{x             {{C{0}{{x\r\n", moonSharp.MemoryPool.CounterNewObjects.ToString());
@@ -90,21 +92,25 @@ namespace Avalon.HashCommands
                     sb.Append("{CM{coon{CS{charp{x Global Variables:{x\r\n");
                     sb.Append("---------------------------------------------------------------------\r\n");
 
-                        if (moonSharp.GlobalVariables.Count == 0)
+                    if (moonSharp.GlobalVariables.Count == 0)
+                    {
+                        sb.Append("  {G* {WNo global variables are currently stored.{x");
+                    }
+                    else
+                    {
+                        foreach (string key in moonSharp.GlobalVariables.Keys)
                         {
-                            sb.Append("  {G* {WNo global variables are currently stored.{x");
+                            sb.AppendFormat("  {{G* {{W{0}: {{C{1}{{x\r\n", key, moonSharp.GlobalVariables[key]);
                         }
-                        else
-                        {
-                            foreach (string key in moonSharp.GlobalVariables.Keys)
-                            {
-                                sb.AppendFormat("  {{G* {{W{0}: {{C{1}{{x\r\n", key, moonSharp.GlobalVariables[key]);
-                            }
-                        }
+                    }
 
-                        sb.AppendLine();
-                        this.Interpreter.Conveyor.EchoText(sb.ToString());
-                        Argus.Memory.StringBuilderPool.Return(sb);
+                    sb.AppendLine();
+                    this.Interpreter.Conveyor.EchoText(sb.ToString());
+                    Argus.Memory.StringBuilderPool.Return(sb);
+#else
+                    this.Interpreter.Conveyor.EchoLog("Lua debug not available: MoonSharp is disabled.", Avalon.Common.Models.LogType.Warning);
+                    Argus.Memory.StringBuilderPool.Return(sb);
+#endif
                 });
 
             this.DisplayParserOutput(result);
