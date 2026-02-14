@@ -11,7 +11,9 @@ using Avalon.Colors;
 using Avalon.Common.Colors;
 using Avalon.Common.Interfaces;
 using Avalon.Common.Models;
+#if ENABLE_MOONSHARP
 using MoonSharp.Interpreter;
+#endif
 using System.Globalization;
 using System.Windows;
 using Application = System.Windows.Application;
@@ -405,12 +407,13 @@ namespace Avalon.Lua
         {
             var win = new WindowInfo();
 
-            // In order for WindowInfo to be usable by MoonSharp the type has
-            // to be registered.
+            // In order for WindowInfo to be usable by MoonSharp the type has to be registered.
+#if ENABLE_MOONSHARP
             if (!UserData.IsTypeRegistered(win.GetType()))
             {
                 UserData.RegisterType(win.GetType());
             }
+#endif
 
             return Application.Current.Dispatcher.Invoke(() =>
             {

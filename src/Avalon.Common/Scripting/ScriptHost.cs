@@ -7,6 +7,7 @@
  * @license           : MIT
  */
 
+using System;
 using Argus.Extensions;
 using Avalon.Common.Models;
 using Avalon.Common.Settings;
@@ -22,7 +23,17 @@ namespace Avalon.Common.Scripting
         /// <summary>
         /// MoonSharp (or scripted) engine.
         /// </summary>
+        [Obsolete("Use Engine property instead.")]
         public IScriptEngine MoonSharp { get; set; }
+
+        /// <summary>
+        /// Generic script engine accessor. Use this in place of the MoonSharp-specific name.
+        /// </summary>
+        public IScriptEngine Engine
+        {
+            get => MoonSharp;
+            set => MoonSharp = value;
+        }
 
         /// <summary>
         /// The number of scripts that are currently active between all environments.

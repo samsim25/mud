@@ -264,7 +264,7 @@ namespace Avalon
             // for any blatant syntax errors.
             if (this.EditorMode == EditorType.Lua && App.Settings.AvalonSettings.ValidateLua)
             {
-                var luaResult = await App.MainWindow.Interp.ScriptHost.MoonSharp.ValidateAsync(this.Text);
+                var luaResult = await App.MainWindow.Interp.ScriptHost.Engine.ValidateAsync(this.Text);
 
                 if (!luaResult.Success && luaResult.Exception != null)
                 {

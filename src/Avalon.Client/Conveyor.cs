@@ -1253,7 +1253,7 @@ namespace Avalon
                 return;
             }
 
-            App.MainWindow.Interp.ScriptHost.MoonSharp.Execute<object>(lua);
+            App.MainWindow.Interp.ScriptHost.Engine.Execute<object>(lua);
         }
 
         /// <summary>
@@ -1267,14 +1267,14 @@ namespace Avalon
                 // If it has access directly send it and return, otherwise we'll use the dispatcher to queue it up on the UI thread.
                 if (Application.Current.Dispatcher.CheckAccess())
                 {
-                    await App.MainWindow.Interp.ScriptHost.MoonSharp.ExecuteAsync<object>(lua);
+                    await App.MainWindow.Interp.ScriptHost.Engine.ExecuteAsync<object>(lua);
                     return;
                 }
 
                 await Application.Current.Dispatcher.InvokeAsync(new Action(async () =>
                 {
                     // This is all that's going to execute as it clears the list.. we can "fire and forget".
-                    await App.MainWindow.Interp.ScriptHost.MoonSharp.ExecuteAsync<object>(lua);
+                    await App.MainWindow.Interp.ScriptHost.Engine.ExecuteAsync<object>(lua);
                 }));
 
             }

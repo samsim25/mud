@@ -50,7 +50,11 @@ namespace Avalon.Timers
             {
                 if (task.IsLua)
                 {
-                    _ = await this.Interpreter.ScriptHost.MoonSharp.ExecuteAsync<object>(task.Command);
+#if ENABLE_MOONSHARP
+                    _ = await this.Interpreter.ScriptHost.Engine.ExecuteAsync<object>(task.Command);
+#else
+                    this.Interpreter.Conveyor.EchoLog("Lua scripting disabled (MoonSharp not enabled).", Avalon.Common.Models.LogType.Warning);
+#endif
                 }
                 else
                 {

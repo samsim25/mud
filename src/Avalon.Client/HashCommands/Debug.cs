@@ -8,7 +8,6 @@
  */
 
 using Avalon.Common.Interfaces;
-using MoonSharp.Interpreter;
 
 namespace Avalon.HashCommands
 {
@@ -19,7 +18,7 @@ namespace Avalon.HashCommands
             this.IsAsync = false;
         }
 
-        private DynValue Code { get; set; }
+        // MoonSharp disabled: placeholder for future script payloads
 
         public override string Name { get; } = "#debug";
 
