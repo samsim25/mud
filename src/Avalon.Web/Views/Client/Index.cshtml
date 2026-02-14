@@ -1,0 +1,183 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Avalon Web Client</title>
+    <style>
+        body {
+            font-family: Consolas, monospace;
+            background: #222;
+            color: #eee;
+            margin: 0;
+            padding: 0;
+        }
+        #terminal {
+            max-width: 1280px;
+            max-height: 960px;
+            width: 100vw;
+            height: 90vh;
+            background: #111;
+            color: #eee;
+            font-size: 20px;
+            overflow-y: auto;
+            padding: 1em;
+            margin: 2em auto 0 auto;
+            box-sizing: border-box;
+            word-break: break-word;
+            white-space: pre-wrap;
+            border-radius: 8px;
+            box-shadow: 0 2px 16px #000a;
+        }
+        #input {
+            width: 100vw;
+            font-size: 20px;
+            padding: 1em;
+            border: none;
+            background: #333;
+            color: #eee;
+        }
+        #fontSize {
+            margin: 1em;
+        }
+        /* ANSI color and style classes */
+        .ansi-black { color: #555; }
+        .ansi-red { color: #c00; }
+        .ansi-green { color: #0c0; }
+        .ansi-yellow { color: #cc0; }
+        .ansi-blue { color: #08f; }
+        .ansi-magenta { color: #c0c; }
+        .ansi-cyan { color: #0cc; }
+        .ansi-white { color: #eee; }
+        .ansi-bright-black { color: #888; }
+        .ansi-bright-red { color: #f55; }
+        .ansi-bright-green { color: #5f5; }
+        .ansi-bright-yellow { color: #ff5; }
+        .ansi-bright-blue { color: #5af; }
+        .ansi-bright-magenta { color: #f5f; }
+        .ansi-bright-cyan { color: #5ff; }
+        .ansi-bright-white { color: #fff; }
+        .ansi-bold { font-weight: bold; }
+        .ansi-underline { text-decoration: underline; }
+        .ansi-inverse { background: #eee; color: #111; }
+    </style>
+</head>
+<body>
+    <div id="connection" style="max-width:1280px;margin:0 auto;">
+        <label>Host:</label>
+        <input type="text" id="host" value="anguish.org" />
+        <label>Port:</label>
+        <input type="number" id="port" value="2222" />
+        <button id="connectBtn">Connect</button>
+        <span id="status">Disconnected</span>
+    </div>
+    <div id="terminal"></div>
+    <input id="input" type="text" placeholder="Type your command..." autocomplete="off" style="max-width:1280px;display:block;margin:0 auto;" />
+    <div id="fontSize" style="max-width:1280px;margin:0 auto;">
+        Font Size:
+        <input type="range" min="8" max="32" value="20" id="fontSlider" />
+        <span id="fontValue">20</span>px
+    </div>
+    <script src="/ansi-format.js"></script>
+    <script>
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('input');
+        const fontSlider = document.getElementById('fontSlider');
+        const fontValue = document.getElementById('fontValue');
+        const connectBtn = document.getElementById('connectBtn');
+        const hostInput = document.getElementById('host');
+        const portInput = document.getElementById('port');
+        const status = document.getElementById('status');
+
+        let connected = false;
+        let socket = null;
+
+        fontSlider.addEventListener('input', function() {
+            terminal.style.fontSize = fontSlider.value + 'px';
+            input.style.fontSize = fontSlider.value + 'px';
+            fontValue.textContent = fontSlider.value;
+        });
+
+        let clearOnNextInput = false;
+        input.addEventListener('keydown', function(e) {
+            if (clearOnNextInput && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                input.value = '';
+                clearOnNextInput = false;
+            }
+            if (e.key === 'Enter') {
+                const cmd = input.value;
+                terminal.innerHTML += '<div>&gt; ' + (window.ansiToHtml ? window.ansiToHtml(cmd) : cmd) + '</div>';
+                terminal.scrollTop = terminal.scrollHeight;
+                if (connected && socket) {
+                    socket.send(cmd + '\r\n');
+                }
+                // Mark to clear input on next keypress only
+                clearOnNextInput = true;
+            }
+        });
+
+        connectBtn.addEventListener('click', function() {
+            if (connected && socket) {
+                socket.close();
+                status.textContent = 'Disconnected';
+                connectBtn.textContent = 'Connect';
+                connected = false;
+                return;
+            }
+            const host = hostInput.value;
+            const port = portInput.value;
+            // Use backend websocket endpoint
+            const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+            socket = new WebSocket(`${wsProtocol}://${location.host}/ws?host=${host}&port=${port}`);
+            status.textContent = 'Connecting...';
+            socket.onopen = function() {
+                status.textContent = 'Connected';
+                connectBtn.textContent = 'Disconnect';
+                connected = true;
+            };
+            socket.onmessage = function(event) {
+                let data = event.data;
+                // Attempt to decode if it's a Blob or ArrayBuffer
+                if (data instanceof Blob) {
+                    const reader = new FileReader();
+                    reader.onload = function() {
+                        renderTerminalOutput(reader.result);
+                    };
+                    reader.readAsText(data, 'utf-8');
+                    return;
+                }
+                renderTerminalOutput(data);
+            };
+
+            function renderTerminalOutput(data) {
+                // Normalize data to string
+                let clean = typeof data === 'string' ? data : String(data);
+                // Remove common replacement characters
+                clean = clean.replace(/�/g, '');
+                // If ansiToHtml is available, use it (handles escaping and spans)
+                if (window.ansiToHtml) {
+                    terminal.innerHTML += '<div>' + window.ansiToHtml(clean) + '</div>';
+                } else {
+                    // Fallback: strip ANSI escape sequences and escape HTML
+                    const stripped = clean.replace(/\x1B\[[0-9;]*m/g, '');
+                    const esc = stripped.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    terminal.innerHTML += '<div>' + esc + '</div>';
+                }
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+            socket.onclose = function() {
+                status.textContent = 'Disconnected';
+                connectBtn.textContent = 'Connect';
+                connected = false;
+            };
+            socket.onerror = function() {
+                status.textContent = 'Error';
+                connectBtn.textContent = 'Connect';
+                connected = false;
+            };
+        });
+    </script>
+</body>
+</html>

@@ -18,7 +18,11 @@ using Avalon.Extensions;
 using Avalon.Lua;
 using Avalon.Network;
 using Cysharp.Text;
+#if ENABLE_MOONSHARP
 using MoonSharp.Interpreter;
+#else
+using InterpreterException = System.Exception;
+#endif
 using System.Threading;
 
 namespace Avalon
@@ -54,12 +58,15 @@ namespace Avalon
             _scriptCommands = new ScriptCommands(this);
             _winScriptCommands = new WindowScriptCommands(this);
 
+#if ENABLE_MOONSHARP
             this.MoonSharpInit();
+#endif
         }
 
         /// <summary>
         /// Sets up the MoonSharp Lua script engine.
         /// </summary>
+#if ENABLE_MOONSHARP
         private void MoonSharpInit()
         {
             this.ScriptHost = AppServices.GetService<ScriptHost>();
@@ -67,17 +74,17 @@ namespace Avalon
             this.ScriptHost.RegisterObject<WindowScriptCommands>(_winScriptCommands.GetType(), _winScriptCommands, "win");
 
             // Events for before and after execution of a script.
-            this.ScriptHost.MoonSharp.PreScriptExecute += (sender, e) =>
+            this.ScriptHost.Engine.PreScriptExecute += (sender, e) =>
             {
                 App.MainWindow.ViewModel.LuaScriptsActive = this.ScriptHost.Statistics.ScriptsActive;
             };
 
-            this.ScriptHost.MoonSharp.PostScriptExecute += (sender, e) =>
+            this.ScriptHost.Engine.PostScriptExecute += (sender, e) =>
             {
                 App.MainWindow.ViewModel.LuaScriptsActive = this.ScriptHost.Statistics.ScriptsActive;
             };
 
-            this.ScriptHost.MoonSharp.ExceptionHandler = (exd) =>
+            this.ScriptHost.Engine.ExceptionHandler = (exd) =>
             {
                 // InterpreterException's give us more info, like the line number and column the
                 // error occurred on.
@@ -106,6 +113,12 @@ namespace Avalon
                 }
             };
         }
+#else
+        private void MoonSharpInit()
+        {
+            // MoonSharp disabled: do nothing
+        }
+#endif
 
         /// <summary>
         /// Sends a command string to the mud.
@@ -386,7 +399,11 @@ namespace Avalon
                     if (alias.IsLua || alias.ExecuteAs == ExecuteType.LuaMoonsharp)
                     {
                         list.Clear();
-                        _ = this.ScriptHost.MoonSharp.ExecuteFunctionAsync<object>(alias.FunctionName, item.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+#if ENABLE_MOONSHARP
+                        _ = this.ScriptHost.Engine.ExecuteFunctionAsync<object>(alias.FunctionName, item.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+#else
+                        this.Conveyor.EchoLog("Lua scripting disabled (MoonSharp not enabled).", LogType.Warning);
+#endif
 
                         return list;
                     }

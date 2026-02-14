@@ -22,7 +22,7 @@ namespace Avalon.Web
         public void ConfigureServices(IServiceCollection svc)
         {
             svc.AddMemoryCache();
-            svc.AddControllers();
+                svc.AddControllersWithViews();
         }
 
         /// <summary>
@@ -38,9 +38,13 @@ namespace Avalon.Web
             }
 
             app.UseRouting();
+            app.UseWebSockets();
+            app.UseMudWebSocket();
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Client}/{action=Index}/{id?}");
             });
         }
     }

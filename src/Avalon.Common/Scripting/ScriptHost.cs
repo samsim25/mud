@@ -7,6 +7,7 @@
  * @license           : MIT
  */
 
+using System;
 using Argus.Extensions;
 using Avalon.Common.Models;
 using Avalon.Common.Settings;
@@ -20,9 +21,19 @@ namespace Avalon.Common.Scripting
     public class ScriptHost
     {
         /// <summary>
-        /// MoonSharp Lua Engine.
+        /// MoonSharp (or scripted) engine.
         /// </summary>
-        public MoonSharpEngine MoonSharp { get; set; }
+        [Obsolete("Use Engine property instead.")]
+        public IScriptEngine MoonSharp { get; set; }
+
+        /// <summary>
+        /// Generic script engine accessor. Use this in place of the MoonSharp-specific name.
+        /// </summary>
+        public IScriptEngine Engine
+        {
+            get => MoonSharp;
+            set => MoonSharp = value;
+        }
 
         /// <summary>
         /// The number of scripts that are currently active between all environments.
@@ -52,7 +63,11 @@ namespace Avalon.Common.Scripting
         /// </summary>
         public ScriptHost()
         {
+#if ENABLE_MOONSHARP
             this.MoonSharp = new MoonSharpEngine(this);
+#else
+            this.MoonSharp = new NoopMoonSharpEngine(this);
+#endif
             this.Statistics = new ScriptStatistics();
         }
 
@@ -63,11 +78,18 @@ namespace Avalon.Common.Scripting
         /// <param name="enableMoonSharp"></param>
         public ScriptHost(bool enableMoonSharp)
         {
+#if ENABLE_MOONSHARP
             if (enableMoonSharp)
             {
                 this.MoonSharp = new MoonSharpEngine(this);
             }
-
+            else
+            {
+                this.MoonSharp = new NoopMoonSharpEngine(this);
+            }
+#else
+            this.MoonSharp = new NoopMoonSharpEngine(this);
+#endif
             this.Statistics = new ScriptStatistics();
         }
 

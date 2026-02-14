@@ -130,7 +130,7 @@ namespace Avalon.Common.Triggers
                 try
                 {
                     var sc = AppServices.GetService<ScriptHost>();
-                    this.ProcessedCommand = sc.MoonSharp.ExecuteFunction<string>(this.FunctionName, paramList);
+                    this.ProcessedCommand = sc.Engine.ExecuteFunction<string>(this.FunctionName, paramList);
                 }
                 catch
                 {
