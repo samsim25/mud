@@ -7,7 +7,7 @@
  * @license           : MIT
  */
 
-using MoonSharp.Interpreter;
+using System;
 
 namespace Avalon.Common.Scripting
 {
@@ -16,10 +16,8 @@ namespace Avalon.Common.Scripting
     /// </summary>
     public class ValidationResult
     {
-
         public bool Success { get; set; }
 
-        public SyntaxErrorException Exception { get; set; }
-
+        public Exception Exception { get; set; }
     }
 }

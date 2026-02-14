@@ -9,6 +9,7 @@
 
 using Argus.Extensions;
 using Argus.Memory;
+#if ENABLE_MOONSHARP
 using Cysharp.Text;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Extensions;
@@ -726,3 +727,4 @@ namespace Avalon.Common.Scripting
         }
     }
 }
+#endif
