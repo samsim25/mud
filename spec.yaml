@@ -4,10 +4,7 @@ services:
     github:
       repo: samsim25/mud
       branch: master
-    # Export the env var and publish the web-only solution (Linux-compatible)
-    build_command: "export DOTNET_BUILD_SOLUTION_PATH=Avalon.Web.sln && dotnet publish $DOTNET_BUILD_SOLUTION_PATH -c Release -o publish"
-    # Run the published DLL from the output folder
-    run_command: "dotnet ./publish/Avalon.Web.dll --urls http://0.0.0.0:8080"
+    # Let the DigitalOcean buildpack handle build and run; specify solution via env
     envs:
       - key: DOTNET_BUILD_SOLUTION_PATH
         value: Avalon.Web.sln
