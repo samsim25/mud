@@ -1,0 +1,12 @@
+name: AvalonWebApp
+services:
+  - name: avalon-web
+    github:
+      repo: samsim25/mud
+      branch: master
+    build_command: "dotnet publish src/Avalon.Web/Avalon.Web.csproj -c Release -o publish"
+    run_command: "dotnet publish src/Avalon.Web/Avalon.Web.csproj -c Release -o publish && dotnet publish/src/Avalon.Web/bin/Release/net8.0/Avalon.Web.dll --urls http://0.0.0.0:8080"
+    envs:
+      - key: DOTNET_BUILD_SOLUTION_PATH
+        value: Avalon.Web.sln
+    http_port: 8080
