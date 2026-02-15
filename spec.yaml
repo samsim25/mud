@@ -1,4 +1,4 @@
-name: AvalonWebApp
+name: avalon-web-app
 services:
   - name: avalon-web
     github:
