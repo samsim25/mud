@@ -268,7 +268,30 @@ namespace Avalon
 
                 if (!luaResult.Success && luaResult.Exception != null)
                 {
-                    string buf = $"An error occurred on line {luaResult.Exception.ToLineNumber.ToString()}\r\nMessage: {luaResult?.Exception?.Message ?? "N/A"}\r\n\r\nWould you still like to save?";
+                    // Safely attempt to extract a line number from the exception; fall back to N/A
+                    string lineNum = "N/A";
+                    try
+                    {
+                        var ex = luaResult.Exception;
+                        var t = ex.GetType();
+                        var prop = t.GetProperty("Line") ?? t.GetProperty("LineNumber") ?? t.GetProperty("l");
+                        if (prop != null)
+                        {
+                            var val = prop.GetValue(ex);
+                            if (val != null) lineNum = val.ToString();
+                        }
+                        else
+                        {
+                            var m = System.Text.RegularExpressions.Regex.Match(ex.Message ?? "", "line\\s+(\\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                            if (m.Success) lineNum = m.Groups[1].Value;
+                        }
+                    }
+                    catch
+                    {
+                        lineNum = "N/A";
+                    }
+
+                    string buf = $"An error occurred on line {lineNum}\r\nMessage: {luaResult?.Exception?.Message ?? "N/A"}\r\n\r\nWould you still like to save?";
 
                     var result = await WindowManager.InputBox(buf, "Syntax Error");
 
