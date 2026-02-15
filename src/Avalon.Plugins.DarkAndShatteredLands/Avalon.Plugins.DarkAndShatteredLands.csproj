@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net10.0-windows7.0</TargetFramework>
+        <TargetFramework>net8.0-windows7.0</TargetFramework>
         <UseWPF>true</UseWPF>
         <Version>2023.11.15.1</Version>
         <Authors>Blake Pell</Authors>
