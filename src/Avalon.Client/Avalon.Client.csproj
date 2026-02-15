@@ -14,13 +14,13 @@
         <Version>2024.9.9.3</Version>
         <AssemblyVersion>2024.9.9.1</AssemblyVersion>
         <FileVersion>2024.9.9.1</FileVersion>
-        <LangVersion>latest</LangVersion>
+        
         <Product>Avalon Mud Client</Product>
         <RepositoryUrl>https://github.com/blakepell/AvalonMudClient</RepositoryUrl>
         <PackageProjectUrl>https://github.com/blakepell/AvalonMudClient</PackageProjectUrl>
         <PackageReleaseNotes></PackageReleaseNotes>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <LangVersion>latest</LangVersion>
+        
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
