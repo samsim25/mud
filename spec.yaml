@@ -4,8 +4,10 @@ services:
     github:
       repo: samsim25/mud
       branch: master
-    build_command: "dotnet publish src/Avalon.Web/Avalon.Web.csproj -c Release -o publish"
-    run_command: "dotnet publish src/Avalon.Web/Avalon.Web.csproj -c Release -o publish && dotnet publish/src/Avalon.Web/bin/Release/net8.0/Avalon.Web.dll --urls http://0.0.0.0:8080"
+    # Export the env var and publish the web-only solution (Linux-compatible)
+    build_command: "export DOTNET_BUILD_SOLUTION_PATH=Avalon.Web.sln && dotnet publish $DOTNET_BUILD_SOLUTION_PATH -c Release -o publish"
+    # Run the published DLL from the output folder
+    run_command: "dotnet ./publish/Avalon.Web.dll --urls http://0.0.0.0:8080"
     envs:
       - key: DOTNET_BUILD_SOLUTION_PATH
         value: Avalon.Web.sln
