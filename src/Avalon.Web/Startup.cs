@@ -36,6 +36,8 @@ namespace Avalon.Web
             {
                 app.UseDeveloperExceptionPage();
             }
+            // Serve static files from wwwroot (JS/CSS/assets)
+            app.UseStaticFiles();
 
             app.UseRouting();
             app.UseWebSockets();

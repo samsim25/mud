@@ -13,6 +13,8 @@ using Avalon.Common.Models;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using Cysharp.Text;
 
 namespace Avalon.Controls
@@ -30,6 +32,11 @@ namespace Avalon.Controls
     /// </remarks>
     public class AvalonTerminal : ICSharpCode.AvalonEdit.TextEditor
     {
+        // Vertical scrollbar for detecting user scroll interactions.
+        private ScrollBar _verticalScrollBar;
+
+        // Prevent recursive handling when programmatically changing auto-scroll state.
+        private bool _suppressAutoScrollChange = false;
         /// <summary>
         /// Whether or not the terminal will attempt to AutoScroll if the line inserted
         /// requests for auto scroll.  This being set to false negates all auto scrolling
@@ -92,6 +99,9 @@ namespace Avalon.Controls
             // Find out if we're wrapped.
             this.TextArea.TextView.VisualLinesChanged += this.TextView_VisualLinesChanged;
 
+            // Detect when the control is loaded so we can find the vertical scrollbar.
+            this.Loaded += this.AvalonTerminal_Loaded;
+
             // When the control is unloaded we'll unwind anything that needs cleaned up like event handlers.
             this.Unloaded += this.AvalonTerminal_Unloaded;
         }
@@ -109,11 +119,123 @@ namespace Avalon.Controls
                 this.SizeChanged -= this.AvalonTerminal_SizeChanged;
                 this.TextArea.TextView.VisualLinesChanged -= this.TextView_VisualLinesChanged;
                 this.Unloaded -= this.AvalonTerminal_Unloaded;
+
+                this.Loaded -= this.AvalonTerminal_Loaded;
+
+                if (this._verticalScrollBar != null)
+                {
+                    this._verticalScrollBar.ValueChanged -= this.VerticalScrollBar_ValueChanged;
+                    this._verticalScrollBar.PreviewMouseDown -= this.VerticalScrollBar_PreviewMouseDown;
+                    this._verticalScrollBar = null;
+                }
+
+                this.PreviewMouseWheel -= this.AvalonTerminal_PreviewMouseWheel;
             }
             catch (Exception ex)
             {
                 App.Conveyor.EchoError($"Error unloading terminal: {ex.Message}");
             }
+        }
+
+        private void AvalonTerminal_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Attach mouse wheel to detect user scrolling via wheel.
+            this.PreviewMouseWheel += this.AvalonTerminal_PreviewMouseWheel;
+
+            // Try to find the vertical scrollbar in the visual tree so we can detect direct scrollbar interactions.
+            if (this._verticalScrollBar == null)
+            {
+                this._verticalScrollBar = FindDescendantScrollBar(this);
+
+                if (this._verticalScrollBar != null)
+                {
+                    this._verticalScrollBar.ValueChanged += this.VerticalScrollBar_ValueChanged;
+                    this._verticalScrollBar.PreviewMouseDown += this.VerticalScrollBar_PreviewMouseDown;
+                }
+            }
+        }
+
+        private void AvalonTerminal_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (this._verticalScrollBar == null)
+            {
+                this._verticalScrollBar = FindDescendantScrollBar(this);
+            }
+
+            if (this._verticalScrollBar == null)
+            {
+                return;
+            }
+
+            // If the user scrolls away from the bottom, freeze auto-scroll. If they scroll to the bottom, re-enable it.
+            if (this._verticalScrollBar.Maximum - this._verticalScrollBar.Value > 0.1)
+            {
+                this.IsAutoScrollEnabled = false;
+            }
+            else
+            {
+                this.IsAutoScrollEnabled = true;
+            }
+        }
+
+        private void VerticalScrollBar_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            // When user begins interacting with the scrollbar assume they want to inspect history and disable auto-scroll.
+            if (sender is ScrollBar sb && sb.Orientation == Orientation.Vertical)
+            {
+                this.IsAutoScrollEnabled = false;
+            }
+        }
+
+        private void VerticalScrollBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (this._suppressAutoScrollChange)
+            {
+                return;
+            }
+
+            var sb = sender as ScrollBar;
+            if (sb == null) return;
+
+            // If we're not at the bottom then freeze auto-scroll. If at the bottom, re-enable and scroll to end.
+            if (sb.Maximum - sb.Value > 0.1)
+            {
+                this.IsAutoScrollEnabled = false;
+            }
+            else
+            {
+                this.IsAutoScrollEnabled = true;
+
+                try
+                {
+                    _suppressAutoScrollChange = true;
+                    this.ScrollToLastLine();
+                }
+                finally
+                {
+                    _suppressAutoScrollChange = false;
+                }
+            }
+        }
+
+        private static ScrollBar FindDescendantScrollBar(DependencyObject parent)
+        {
+            if (parent == null) return null;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is ScrollBar sb && sb.Orientation == Orientation.Vertical)
+                {
+                    return sb;
+                }
+
+                var result = FindDescendantScrollBar(child);
+                if (result != null) return result;
+            }
+
+            return null;
         }
 
         /// <summary>

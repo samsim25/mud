@@ -1,0 +1,24 @@
+﻿At line:1 char:96
++ ... sproj | ForEach-Object { try { [xml](Get-Content .FullName) > ; Write ...
++                                                                  ~
+Missing file specification after redirection operator.
+At line:1 char:112
++ ... Write-Output " OK:  \ } catch { Write-Output \ERROR parsing  :  \ } }
++                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The string is missing the terminator: ".
+At line:1 char:64
++ ... -ChildItem -Recurse -Filter *.csproj | ForEach-Object { try { [xml](G ...
++                                                                 ~
+Missing closing '}' in statement block or type definition.
+At line:1 char:168
++ ... Write-Output " OK:  \ } catch { Write-Output \ERROR parsing  :  \ } }
++                                                                          ~
+The Try statement is missing its Catch or Finally block.
+At line:1 char:58
++ Get-ChildItem -Recurse -Filter *.csproj | ForEach-Object { try { [xml ...
++                                                          ~
+Missing closing '}' in statement block or type definition.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx 
+   ception
+    + FullyQualifiedErrorId : MissingFileSpecification
+ 

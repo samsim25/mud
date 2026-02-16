@@ -101,13 +101,52 @@
         });
 
         let clearOnNextInput = false;
-        input.addEventListener('keydown', function(e) {
-            if (clearOnNextInput && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                input.value = '';
-                clearOnNextInput = false;
+        // Whether new incoming lines should auto-scroll to the bottom.
+        let isAutoScrollEnabled = true;
+
+        // Command history
+        const history = [];
+        let historyIndex = -1; // -1 = not browsing history
+        let tempInput = ''; // store current edited value when starting to browse history
+
+        // Small threshold in pixels to consider "at bottom" due to subpixel/layout differences.
+        const SCROLL_BOTTOM_THRESHOLD = 4;
+
+        // Monitor user scrolling to freeze/unfreeze auto-scroll.
+        terminal.addEventListener('scroll', function() {
+            const atBottom = (terminal.scrollTop + terminal.clientHeight) >= (terminal.scrollHeight - SCROLL_BOTTOM_THRESHOLD);
+            if (atBottom) {
+                // User is at the bottom — re-enable auto-scroll so new content will follow.
+                isAutoScrollEnabled = true;
+            } else {
+                // User scrolled up — freeze auto-scroll so new content doesn't jump the view.
+                isAutoScrollEnabled = false;
             }
+        });
+        input.addEventListener('keydown', function(e) {
+            if (clearOnNextInput) {
+                // If the user types a printable character, only clear the input
+                // when the caret is at the end (they intend to start a new command).
+                if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    const selStart = input.selectionStart;
+                    const selEnd = input.selectionEnd;
+                    if (selStart === selEnd && selEnd === input.value.length) {
+                        input.value = '';
+                    }
+                    clearOnNextInput = false;
+                } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key.startsWith('Arrow') || e.key === 'Home' || e.key === 'End' || e.key === 'PageUp' || e.key === 'PageDown') {
+                    // User is navigating or editing existing text — cancel the clear flag and don't wipe the value.
+                    clearOnNextInput = false;
+                } else {
+                    // For other keys (modifiers, etc.) just cancel the flag.
+                    clearOnNextInput = false;
+                }
+            }
+
             if (e.key === 'Enter') {
                 const cmd = input.value;
+                // User submitted a command — re-enable auto-scroll and jump to bottom so they see immediate response.
+                isAutoScrollEnabled = true;
                 terminal.innerHTML += '<div>&gt; ' + (window.ansiToHtml ? window.ansiToHtml(cmd) : cmd) + '</div>';
                 terminal.scrollTop = terminal.scrollHeight;
                 if (connected && socket) {
@@ -115,6 +154,44 @@
                 }
                 // Mark to clear input on next keypress only
                 clearOnNextInput = true;
+                // Add to history (ignore empty commands)
+                if (cmd && cmd.trim().length > 0) {
+                    history.push(cmd);
+                }
+                // reset browsing state
+                historyIndex = -1;
+                tempInput = '';
+            }
+
+            // History navigation: Up/Down arrows
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                // Prevent cursor movement in the input
+                e.preventDefault();
+                if (history.length === 0) return;
+
+                if (historyIndex === -1) {
+                    // start browsing: save current value
+                    tempInput = input.value;
+                    historyIndex = history.length - 1;
+                } else if (e.key === 'ArrowUp') {
+                    // move older
+                    if (historyIndex > 0) historyIndex--;
+                } else if (e.key === 'ArrowDown') {
+                    // move newer
+                    if (historyIndex < history.length - 1) historyIndex++;
+                    else {
+                        // beyond newest -> restore temp and stop browsing
+                        historyIndex = -1;
+                        input.value = tempInput;
+                        return;
+                    }
+                }
+
+                if (historyIndex !== -1) {
+                    input.value = history[historyIndex];
+                    // Move caret to end
+                    input.selectionStart = input.selectionEnd = input.value.length;
+                }
             }
         });
 
@@ -165,7 +242,11 @@
                     const esc = stripped.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     terminal.innerHTML += '<div>' + esc + '</div>';
                 }
-                terminal.scrollTop = terminal.scrollHeight;
+
+                // Only auto-scroll if the user hasn't scrolled up to view history.
+                if (isAutoScrollEnabled) {
+                    terminal.scrollTop = terminal.scrollHeight;
+                }
             }
             socket.onclose = function() {
                 status.textContent = 'Disconnected';

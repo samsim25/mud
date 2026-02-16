@@ -4,10 +4,9 @@ Write-Host -ForegroundColor Green "-------------------------------"
 Write-Host
 
 #Set the build variables
-$project = "..\src\Avalon.Client\Avalon.Client.csproj"
+$project = "..\src\Avalon.Web\Avalon.Web.csproj"
 $project_common = "..\src\Avalon.Common\Avalon.Common.csproj"
 $project_moonsharp = "..\src\Avalon.MoonSharp\Avalon.MoonSharp.csproj"
-$project_dsl = "..\src\Avalon.Plugins.DarkAndShatteredLands\Avalon.Plugins.DarkAndShatteredLands.csproj"
 $project_sqlite = "..\src\Avalon.Sqlite\Avalon.Sqlite.csproj"
 $project_issx86 = ".\x86Installer.iss"
 $project_issx64 = ".\x64Installer.iss"
@@ -24,14 +23,11 @@ Write-Host "Updating csproj and iss files to version: '$NewVersion'"
 & $PSScriptRoot\UpdateVersion.ps1 -project $project -version $newVersion
 & $PSScriptRoot\UpdateVersion.ps1 -project $project_common -version $newVersion
 & $PSScriptRoot\UpdateVersion.ps1 -project $project_moonsharp -version $newVersion
-& $PSScriptRoot\UpdateVersion.ps1 -project $project_dsl -version $newVersion
 & $PSScriptRoot\UpdateVersion.ps1 -project $project_sqlite -version $newVersion
 & $PSScriptRoot\UpdateVersion.ps1 -project $project_issx86 -version $newVersion
 & $PSScriptRoot\UpdateVersion.ps1 -project $project_issx64 -version $newVersion
 
-# Optional plugin build
-$pluginsBuild = Read-Host "Do you want to publish any plugin projects (y/n)"
-
+# Install prompt
 $installAfter = Read-Host "Do you want to install the x64 at the end (y/n)"
 
 # Make the build folders if they don't exist.
@@ -56,10 +52,7 @@ Invoke-Expression "& $installer"
 $installer = '"C:\Program Files (x86)\Inno Setup 6\iscc.exe" ".\x86Installer.iss"'
 Invoke-Expression "& $installer"
 
-# If they wanted to build the plugins also then do that.
-if ($pluginsBuild -eq 'y') {
-    & $PSScriptRoot\PublishPlugins.ps1
-}
+# (plugin publishing removed)
 
 # If they wanted to install as the last step, do that.
 if ($installAfter -eq 'y') {
